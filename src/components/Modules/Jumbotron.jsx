@@ -16,7 +16,7 @@ const Jumbotron = () => {
       <img
         src={JUMBOTRON_IMAGE}
         alt="netflix-jumbotron"
-        className="absolute top-0 left-0 object-cover h-[700px] w-full opacity-60"
+        className="absolute top-0 left-0 object-cover h-[700px] w-full brightness-75"
       />
       <EachUtils
         of={language == "en" ? LIST_JUMBOTRON_EN : LIST_JUMBOTRON_ID}

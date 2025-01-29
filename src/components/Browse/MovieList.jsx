@@ -9,8 +9,8 @@ import { getMoviesByType } from "../../utils/getMoviesByType";
 const MovieList = ({ title, moviesType }) => {
   const [isHover, setIsHover] = useState(false);
   const [, setIdMovie] = useAtom(idMovieAtom);
-  const [isLoading, setIsLoading] = useState(true);
   const [movieList, setMovieList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchMovies = async () => {
     try {
