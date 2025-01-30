@@ -3,34 +3,34 @@ import { EachUtils } from "../../utils/EachUtils";
 import MovieCard from "./MovieCard";
 import CarouselLayout from "../CarouselLayout";
 import { useAtom } from "jotai";
-import { idMovieAtom } from "../../jotai/atoms";
+import { idMovieAtom, isFetchingAtom } from "../../jotai/atoms";
 import { getMoviesByType } from "../../utils/getMoviesByType";
 
 const MovieList = ({ title, moviesType }) => {
   const [isHover, setIsHover] = useState(false);
   const [, setIdMovie] = useAtom(idMovieAtom);
   const [movieList, setMovieList] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchMovies = async () => {
-    try {
-      setIsLoading(true);
-      const results = await getMoviesByType({ moviesType });
-      setMovieList(results);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [, setIsFetching] = useAtom(isFetchingAtom);
 
   useEffect(() => {
-    fetchMovies();
-  }, []);
-
-  if (isLoading) {
-    return <div>Loading..</div>;
-  }
+    if (moviesType) {
+      const fetchMovies = async () => {
+        try {
+          setIsFetching(true);
+          const results = await getMoviesByType({ moviesType });
+          setMovieList(results);
+        } catch (err) {
+          console.log(err);
+        } finally {
+          setTimeout(() => {
+            setIsFetching(false);
+          }, 1000);
+        }
+      };
+      fetchMovies();
+    }
+  }, [moviesType, setIsFetching]);
 
   return (
     <section className="px-8 py-4">
@@ -40,7 +40,7 @@ const MovieList = ({ title, moviesType }) => {
           of={movieList}
           render={(item, index) => (
             <div
-              className="h-72 w-1/4  carousel-item mt-4"
+              className="h-72 w-1/4 carousel-item mt-4"
               key={index}
               onMouseLeave={() => {
                 setIsHover(false);

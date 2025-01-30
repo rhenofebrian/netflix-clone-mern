@@ -2,27 +2,43 @@ import { motion } from "framer-motion";
 import { useAtom } from "jotai";
 import { GoChevronDown, GoPlay, GoPlusCircle } from "react-icons/go";
 import ReactPlayer from "react-player";
-import { idMovieAtom, isOpenModalAtom } from "../../jotai/atoms";
+import {
+  idMovieAtom,
+  isFetchingAtom,
+  isOpenModalAtom,
+} from "../../jotai/atoms";
 import { getVideoURL } from "../../utils/getVideoURL";
 import { useEffect, useState } from "react";
+import Skeleton from "../Modules/Skeleton";
+import { useNavigate } from "react-router-dom";
 
 const MovieCard = ({ data, isHover, setIsHover }) => {
   const [idMovie, setIdMovie] = useAtom(idMovieAtom);
   const [, setIsOpenModal] = useAtom(isOpenModalAtom);
-  const [videoUrl, setVideoUrl] = useState([[]]);
-
-  const fetchUrl = async () => {
-    try {
-      const res = await getVideoURL({ movie_id: data.id });
-      setVideoUrl(res);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [isFetching] = useAtom(isFetchingAtom);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUrl();
-  }, []);
+    if (idMovie && data) {
+      const fetchUrl = async () => {
+        try {
+          const res = await getVideoURL({ movie_id: data.id });
+          if (res) {
+            setVideoUrl(`https://youtube.com/watch?v=${res}`);
+          } else {
+            setVideoUrl(null);
+          }
+          setVideoUrl(res);
+        } catch (err) {
+          console.log(err);
+        }
+      };
+      fetchUrl();
+    }
+  }, [idMovie, data]);
+
+  if (isFetching) return <Skeleton />;
 
   return (
     <>
@@ -33,19 +49,24 @@ const MovieCard = ({ data, isHover, setIsHover }) => {
           transition={{ duration: 0, ease: "easeInOut" }}
           className="relative shadow-md cursor-pointer transition-all w-full"
         >
-          <ReactPlayer
-            url={`https://youtube.com/watch?v=${videoUrl}`}
-            playing={true}
-            loop={true}
-            muted={true}
-            width={"100%"}
-            height={"auto"}
-            controls={false}
-          />
+          {videoUrl && (
+            <ReactPlayer
+              url={`https://youtube.com/watch?v=${videoUrl}`}
+              playing={true}
+              loop={true}
+              muted={true}
+              width={"100%"}
+              height={"auto"}
+              controls={false}
+            />
+          )}
           <div className="flex flex-col gap-1.5 h-auto p-2 bg-[#141414]">
             <section className="mt-1 flex justify-between">
               <div className="flex gap-2">
-                <button className="text-white">
+                <button
+                  className="text-white"
+                  onClick={() => navigate("/watch/" + videoUrl)}
+                >
                   <GoPlay size={32} />
                   Play
                 </button>

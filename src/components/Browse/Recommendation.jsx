@@ -2,24 +2,28 @@ import { GoPlay } from "react-icons/go";
 import { EachUtils } from "../../utils/EachUtils";
 import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
-import { idMovieAtom } from "../../jotai/atoms";
+import { idMovieAtom, isOpenModalAtom } from "../../jotai/atoms";
 import getMovieRecommendation from "../../utils/getMovieRecommendation";
+import { getVideoURL } from "../../utils/getVideoURL";
+import { useNavigate } from "react-router-dom";
 
 export const Recommendation = () => {
-  const [idMovie] = useAtom(idMovieAtom);
+  const [idMovie, setIdMovie] = useAtom(idMovieAtom);
   const [recommendationMovies, setRecommendationMovies] = useState([]);
-
-  const fetchMovieRecommendation = async () => {
-    try {
-      const resRecom = await getMovieRecommendation({ movie_id: idMovie });
-      setRecommendationMovies(resRecom);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  const [videoUrl, setVideoUrl] = useState(null);
+  const navigate = useNavigate();
+  const [, setIsOpenModal] = useAtom(isOpenModalAtom);
 
   useEffect(() => {
     if (idMovie) {
+      const fetchMovieRecommendation = async () => {
+        try {
+          const resRecom = await getMovieRecommendation({ movie_id: idMovie });
+          setRecommendationMovies(resRecom);
+        } catch (err) {
+          console.log(err);
+        }
+      };
       fetchMovieRecommendation();
     }
   }, [idMovie]);
@@ -34,6 +38,11 @@ export const Recommendation = () => {
             <div
               key={index}
               className="w-full h-auto cursor-pointer rounded-md bg-[#141414]"
+              onMouseEnter={() => {
+                getVideoURL({ movie_id: item.id }).then((result) =>
+                  setVideoUrl(result)
+                );
+              }}
             >
               <div className="relative">
                 <img
@@ -42,8 +51,16 @@ export const Recommendation = () => {
                   }
                   className="w-full h-48 rounded-t-md"
                 />
-                {console.log(item.poster_path)}
-                <button className="absolute top-10 left-1/2 -translate-x-1/2">
+                <button
+                  onClick={() => {
+                    {
+                      navigate("/watch/" + videoUrl);
+                      setIsOpenModal(false);
+                      setIdMovie(null);
+                    }
+                  }}
+                  className="absolute top-10 left-1/2 -translate-x-1/2"
+                >
                   <GoPlay size={44} />
                 </button>
               </div>

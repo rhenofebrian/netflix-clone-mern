@@ -7,32 +7,34 @@ import { useEffect, useState } from "react";
 import { getMovieDetail } from "../../utils/getMovieDetail";
 import ReactPlayer from "react-player";
 import { getVideoURL } from "../../utils/getVideoURL";
+import { useNavigate } from "react-router-dom";
 
 const Modal = () => {
   const [isOpenModal, setIsOpenModal] = useAtom(isOpenModalAtom);
-  const [idMovie] = useAtom(idMovieAtom);
+  const [idMovie, setIdMovie] = useAtom(idMovieAtom);
+
   const [movieDetail, setMovieDetail] = useState([]);
   const [movieUrl, setMovieUrl] = useState(null);
-
-  const fetchMovieDetail = async () => {
-    try {
-      const res = await getMovieDetail({ movie_id: idMovie });
-      setMovieDetail(res);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-  const fetchVideoUrl = async () => {
-    try {
-      const resUrl = await getVideoURL({ movie_id: idMovie });
-      setMovieUrl(resUrl);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (idMovie) {
+      const fetchMovieDetail = async () => {
+        try {
+          const res = await getMovieDetail({ movie_id: idMovie });
+          setMovieDetail(res);
+        } catch (err) {
+          console.log(err);
+        }
+      };
+      const fetchVideoUrl = async () => {
+        try {
+          const resUrl = await getVideoURL({ movie_id: idMovie });
+          setMovieUrl(resUrl);
+        } catch (err) {
+          console.log(err);
+        }
+      };
       fetchMovieDetail();
       fetchVideoUrl();
     }
@@ -72,14 +74,23 @@ const Modal = () => {
           >
             <MdClose size={20} />
           </button>
-          <div className="absolute bottom-1/2 left-10">
+          <div className="absolute bottom-1/2 left-10 mb-2">
             <h2 className="text-4xl font-black text-white">
               {movieDetail?.title}
             </h2>
           </div>
-          <div className="absolute bottom-1/2 translate-y-12 left-10">
+          <div className="absolute bottom-1/2 translate-y-12 left-10 ">
             <div className="flex gap-4">
-              <button className="hover: bg-slate-50 w-32 text-black flex items-center justify-center gap-1 p-1 rounded-md font-bold text-xl">
+              <button
+                onClick={() => {
+                  navigate("/watch/" + movieUrl);
+                  setIsOpenModal(false);
+                  setMovieUrl(null);
+                  setMovieDetail([]);
+                  setIdMovie(null);
+                }}
+                className="hover: bg-slate-50 w-32 text-black flex items-center justify-center gap-2 p-1 rounded-md font-bold text-xl"
+              >
                 <GoPlay size={32} /> Play
               </button>
               <button className="text-slate-200 hover:text-white">
@@ -99,7 +110,7 @@ const Modal = () => {
             </div>
             <p className="mt-4">{movieDetail?.overview}</p>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 ">
             <p>Genre: {genreMapping(movieDetail?.genres)}</p>
             <p>Popularity: {movieDetail?.popularity}</p>
           </div>
