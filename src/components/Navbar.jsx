@@ -6,8 +6,8 @@ function Navbar() {
   const navigate = useNavigate();
 
   return (
-    <header className="relative z-20">
-      <nav className=" flex flex-wrap justify-between items-center pr-8 pl-7 py-4">
+    <header className="relative z-20 bg-[#141414]">
+      <nav className="flex flex-wrap justify-between items-center pr-8 pl-7 py-4">
         <div>
           <img
             src="/netflix-logo-icon.png"

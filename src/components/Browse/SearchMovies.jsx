@@ -37,7 +37,7 @@ const SearchMovies = () => {
   }, [inputMovies, setIsFetching]);
 
   return (
-    <div className="grid grid-cols-4 p-8 mt-10">
+    <div className="grid sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 grid-cols-2 px-4 py-2 gap-4 mt-10">
       <EachUtils
         of={movieList}
         render={(item, index) => (

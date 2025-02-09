@@ -1,26 +1,97 @@
 import { motion } from "framer-motion";
 import { useAtom } from "jotai";
-import { GoChevronDown, GoPlay, GoPlusCircle } from "react-icons/go";
+import { GoChevronDown, GoPlay, GoPlusCircle, GoTrash } from "react-icons/go";
 import ReactPlayer from "react-player";
 import {
+  emailStorageAtom,
   idMovieAtom,
+  isFavoritedAtom,
   isFetchingAtom,
   isOpenModalAtom,
+  tokenAtom,
 } from "../../jotai/atoms";
 import { getVideoURL } from "../../utils/getVideoURL";
 import { useEffect, useState } from "react";
 import Skeleton from "../Modules/Skeleton";
 import { useNavigate } from "react-router-dom";
+import { axiosInstanceExpress } from "../../utils/axiosInstace";
+import Notification from "../Modules/Notification";
+import { checkFavoriteMovies } from "../../utils/checkFavoriteMovies";
 
-const MovieCard = ({ data, isHover, setIsHover }) => {
+const MovieCard = ({ data, isHover, setIsHover, moviesType }) => {
   const [idMovie, setIdMovie] = useAtom(idMovieAtom);
   const [, setIsOpenModal] = useAtom(isOpenModalAtom);
-  const [videoUrl, setVideoUrl] = useState(null);
   const [isFetching] = useAtom(isFetchingAtom);
+  const [tokenStorage] = useAtom(tokenAtom);
+  const [emailStorage] = useAtom(emailStorageAtom);
+  const [isFavorited, setIsFavorited] = useAtom(isFavoritedAtom);
+
+  const [isAdd, setIsAdd] = useState(false);
+  const [notifMessage, setNotifMessage] = useState(null);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [movieTypeState, setMovieTypeState] = useState(null);
   const navigate = useNavigate();
 
+  const handleAddFavoriteMovie = async () => {
+    if (!emailStorage && !tokenStorage) return;
+
+    try {
+      setIsAdd(true);
+      const addMovie = await axiosInstanceExpress.post("my-movies", {
+        email: emailStorage,
+        token: tokenStorage,
+        data,
+      });
+      if (addMovie.status !== 201)
+        return setNotifMessage("failed to add movie");
+
+      setNotifMessage(`${data.title} just added to your favorite list`);
+      setIsFavorited(true);
+
+      setTimeout(() => {
+        setIsAdd(false);
+        setNotifMessage(null);
+      }, 2000);
+    } catch (err) {
+      setNotifMessage(`${err.message}`);
+      setTimeout(() => {
+        setIsAdd(false);
+        setNotifMessage(null);
+      }, 2000);
+    }
+  };
+
+  const handleRemoveFavoriteMovie = async () => {
+    if (!emailStorage && !tokenStorage) return;
+    try {
+      setIsAdd(true);
+      const removeMovie = await axiosInstanceExpress.delete("my-movies", {
+        data: {
+          email: emailStorage,
+          token: tokenStorage,
+          movieId: data.id,
+        },
+      });
+      if (removeMovie.status !== 204)
+        return setNotifMessage("failed to remove movie from favorite");
+      setNotifMessage(`${data.title} just removed from your favorite list`);
+      setIsFavorited(false);
+
+      setTimeout(() => {
+        setIsAdd(false);
+        setNotifMessage(null);
+      }, 2000);
+    } catch (err) {
+      setNotifMessage(err.message);
+      setTimeout(() => {
+        setIsAdd(false);
+        setNotifMessage(null);
+      }, 2000);
+    }
+  };
+
   useEffect(() => {
-    if (idMovie && data) {
+    if (idMovie && data && isHover) {
       const fetchUrl = async () => {
         try {
           const res = await getVideoURL({ movie_id: data.id });
@@ -36,42 +107,55 @@ const MovieCard = ({ data, isHover, setIsHover }) => {
       };
       fetchUrl();
     }
-  }, [idMovie, data]);
+  }, [idMovie, data, isHover]);
 
   if (isFetching) return <Skeleton />;
 
   return (
     <>
-      {isHover && idMovie == data.id ? (
+      {isAdd && notifMessage && <Notification message={notifMessage} />}
+
+      {isHover && idMovie == data.id && moviesType === movieTypeState ? (
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0, ease: "easeInOut" }}
-          className="relative shadow-md cursor-pointer transition-all w-full"
+          className="relative shadow-md transition-all w-full"
         >
-          {videoUrl && (
+          <div className="hover:scale-110 transition-all">
             <ReactPlayer
-              url={`https://youtube.com/watch?v=${videoUrl}`}
+              url={videoUrl ? `https://youtube.com/watch?v=${videoUrl}` : null}
               playing={true}
               loop={true}
               muted={true}
               width={"100%"}
-              height={"auto"}
+              height={"180px"}
               controls={false}
             />
-          )}
-          <div className="flex flex-col gap-1.5 h-auto p-2 bg-[#141414]">
+          </div>
+
+          <div className="flex flex-col gap-1.5 h-auto p-4 bg-[#141414] rounded-b-xl">
             <section className="mt-1 flex justify-between">
               <div className="flex gap-2">
                 <button
-                  className="text-white"
+                  className="text-white hover:text-[#323232]"
                   onClick={() => navigate("/watch/" + videoUrl)}
                 >
                   <GoPlay size={32} />
-                  Play
                 </button>
-                <button className="text-white">
-                  <GoPlusCircle size={32} /> Add
+                <button
+                  onClick={
+                    isFavorited
+                      ? handleRemoveFavoriteMovie
+                      : handleAddFavoriteMovie
+                  }
+                  className="text-white hover:text-[#323232]"
+                >
+                  {isFavorited ? (
+                    <GoTrash size={32} />
+                  ) : (
+                    <GoPlusCircle size={32} />
+                  )}
                 </button>
               </div>
               <div>
@@ -94,9 +178,15 @@ const MovieCard = ({ data, isHover, setIsHover }) => {
           onMouseEnter={() => {
             setIsHover(true);
             setIdMovie(data.id);
+            checkFavoriteMovies({
+              emailStorage,
+              tokenStorage,
+              idMovie: data.id,
+            }).then((result) => setIsFavorited(result));
+            setMovieTypeState(moviesType);
           }}
           src={`${import.meta.env.VITE_BASE_URL_TMDB_IMAGE}${data.poster_path}`}
-          className="w-full max-h-48 cursor-pointer"
+          className="w-full max-h-72 cursor-pointer object-cover rounded-xl"
         />
       )}
     </>

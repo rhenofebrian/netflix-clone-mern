@@ -7,3 +7,10 @@ export const axiosInstance = axios.create({
     Authorization: `Bearer ${import.meta.env.VITE_TOKEN_TMDB}`,
   },
 });
+
+export const axiosInstanceExpress = axios.create({
+  baseURL: import.meta.env.VITE_BASE_URL_EXPRESS,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});

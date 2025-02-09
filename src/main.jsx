@@ -7,6 +7,7 @@ import "./index.css";
 import Watch from "./pages/Watch.jsx";
 import Register from "./pages/Register.jsx";
 import Login from "./pages/Login.jsx";
+import FavoriteMovies from "./pages/FavoriteMovies.jsx";
 
 const router = createBrowserRouter([
   {
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
   {
     element: <Login />,
     path: "/login",
+  },
+  {
+    element: <FavoriteMovies />,
+    path: "/favorite",
   },
 ]);
 
